@@ -40,50 +40,14 @@ This repo is organized as follows:
 └── README.md
 ```
 ## Build
-Assuming the CUDAtoolkit and HIP have been properly installed/build on a linux box, each example can be simply build with `CMake` > 3.18 sourcing its respetive compilation script:
+Assuming that the `CUDAtoolkit` and the `HIP` [package](https://github.com/ROCm-Developer-Tools/HIP) have been properly installed/built on a linux box, each sample_library can be build using `CMake` > 3.16 by sourcing its respetive compilation script:
 ```bash 
 $ mkdir build && cd build
 $ source ../compileScripts/cmake_*.sh
 ```
-Typical output on a **NVIDIA platform** :
+Typical output on a **NVIDIA platform** reads :
 ```bash
-$ source ../compileScripts/cmake_cxx_cuda.sh 
--- The CXX compiler identification is GNU 8.5.0
--- The CUDA compiler identification is NVIDIA 11.8.89
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: /usr/bin/c++ - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
--- Detecting CUDA compiler ABI info
--- Detecting CUDA compiler ABI info - done
--- Check for working CUDA compiler: /usr/local/cuda-11.8/bin/nvcc - skipped
--- Detecting CUDA compile features
--- Detecting CUDA compile features - done
--- Found CUDAToolkit: /usr/local/cuda-11.8/include (found version "11.8.89") 
--- Performing Test CMAKE_HAVE_LIBC_PTHREAD
--- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
--- Looking for pthread_create in pthreads
--- Looking for pthread_create in pthreads - not found
--- Looking for pthread_create in pthread
--- Looking for pthread_create in pthread - found
--- Found Threads: TRUE  
--- Configuring done (1.3s)
--- Generating done (0.0s)
--- Build files have been written to: /home/mdiaz/Depots/devLibrary/cuda_library/build
-
-$ make
-[ 25%] Building CUDA object CMakeFiles/cuda_sampleLib.dir/cuda_sampleLib.cu.o
-[ 50%] Linking CUDA shared library libcuda_sampleLib.so
-[ 50%] Built target cuda_sampleLib
-[ 75%] Building CXX object CMakeFiles/test_sampleLib.run.dir/test_sampleLib.cpp.o
-[100%] Linking CXX executable test_sampleLib.run
-[100%] Built target test_sampleLib.run
-```
-
-Typical output on a **AMD platform** :
-```bash
-$ source ../compileScripts/cmake_hipcc.sh
+$ source ../compileScripts/cmake_hipcc.sh 
 -- The CXX compiler identification is GNU 8.5.0
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
@@ -100,6 +64,38 @@ $ source ../compileScripts/cmake_hipcc.sh
 -- Generating done (0.0s)
 -- Build files have been written to: /home/mdiaz/Depots/devLibrary/device_library/build
 
+$ make
+[ 25%] Building CUDA object CMakeFiles/cuda_sampleLib.dir/cuda_sampleLib.cu.o
+[ 50%] Linking CUDA shared library libcuda_sampleLib.so
+[ 50%] Built target cuda_sampleLib
+[ 75%] Building CXX object CMakeFiles/test_sampleLib.run.dir/test_sampleLib.cpp.o
+[100%] Linking CXX executable test_sampleLib.run
+[100%] Built target test_sampleLib.run
+```
+
+Typical output on a **AMD platform** reads :
+```bash
+$ source ../compileScripts/cmake_hipcc.sh 
+-- The CXX compiler identification is Clang 14.0.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/rocm/bin/hipcc - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found HIP: /opt/rocm (found version "5.2.21153-02187ecf") 
+-- Performing Test HIP_CLANG_SUPPORTS_PARALLEL_JOBS
+-- Performing Test HIP_CLANG_SUPPORTS_PARALLEL_JOBS - Success
+-- HIP_PLATFORM: amd
+-- Looking for C++ include pthread.h
+-- Looking for C++ include pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- hip::amdhip64 is SHARED_LIBRARY
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /users/diazesco/Depots/devLibrary/hip_library/build
+
 $ make 
 [ 25%] Building CXX object CMakeFiles/device_sampleLib.dir/device_sampleLib.hip.cpp.o
 [ 50%] Linking CXX shared library libdevice_sampleLib.so
@@ -108,7 +104,11 @@ $ make
 [100%] Linking CXX executable test_sampleLib.run
 [100%] Built target test_sampleLib.run
 ```
-NOTEL: I have excluded all warning output messages from `hipcc` for the sake of breverity. 
+NOTE: I have excluded all warning output messages from `hipcc` for the sake of clarity. To avoid them, one must implement a `deviceErrChecker()` function/macro. `hipcc` is very picky in this regard.
+
+## What's trick on *device library*?
+
+Given the `CMake` building problem with `hipblas` libraries and `hipcc` on **NVIDIA platform**, see [(1)](https://www.reddit.com/r/ROCm/comments/12bmygw/how_do_you_build_apps_with_hipblas_using_cmake/) and [(2)](https://www.reddit.com/r/cmake/comments/12iknc9/building_crossplataform_libraries_with_hip_in_c/)), a preprocessing switch has been implemented so that the `cublas` library is used when compiling the *device_library* on **NVIDIA platform**s and the `hipblas` library when on **AMD platform**s. 
 
 ## Test
 
@@ -122,8 +122,8 @@ Verify that for each case, the library test script produces the following output
 
 ## Disclaimer
 I have tested this only on:
- - LUMI supercomputer nodes ( **AMD platform** )
- - LUCIA supercomputer nodes ( **NVIDIA platform** )
+  - The supercomputer of Wallonia: [LUCIA](https://tier1.cenaero.be/en/lucia-kickoff) nodes ( **NVIDIA platform** )
+  - The supercomputer of the north: [LUMI](https://www.lumi-supercomputer.eu/may-we-introduce-lumi/) nodes ( **AMD platform** )
 
 happy coding !
  - M.D.

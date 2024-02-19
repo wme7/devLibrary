@@ -6,7 +6,7 @@ int main() {
   // Allocate host and device memory
   int N = 1 << 8; // 256 elements
   real *h_in;  host::memory<real>::allocate(&h_in, N);
-  real *d_var; hip::memory<real>::allocate(&d_var, N);
+  real *d_var;  hip::memory<real>::allocate(&d_var, N);
   real *h_out; host::memory<real>::allocate(&h_out, N);
 
   // Fill the input vector with sequential integers
@@ -31,7 +31,7 @@ int main() {
 
   // Release resources
   host::memory<real>::free(h_in);
-  hip::memory<real>::free(d_var);
+   hip::memory<real>::free(d_var);
   host::memory<real>::free(h_out);
   return 0;
 }

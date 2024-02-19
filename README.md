@@ -1,17 +1,49 @@
-# devLibrary
-A sample library to test cross-platform capabilities of `HIP` API and `roc::hipblas` library.
-
+# Device Library
 Writen by Manuel A. Diaz @ CENAERO ASBL on 25.04.2023 
 
-## Contents of this repo:
-This repo contains three version of as single sample-library in C++17, namely:
+Is a prototype library to test cross-device capabilities of `HIP` API and `roc::hipblas` library.
+
+## Introduction
+In this example we aim to response a simple question:
+
+> How to build single `hip`-library with `CMake` on either NVIDIA or AMD platforms?
+
+## Exploration path:
+
  - A initial CUDA version of the library to be used as a study case. 
   We refer to it from here on as the *cuda library*.
- - A manually hipified version of the *cuda library*.
-  Because it is meant to be built on AMD platforms platforms without any special treatment, we refer to it as the *hip library*.
- - A cross-platform ( NVIDIA / AMD ) version of the *cuda library*. 
-  We refere to it as the *device library* because it builds on NVIDIA and/or AMD platforms with a special trick to overcomes the compilation problem observed hipblas library. See forum discussions [(1)](https://www.reddit.com/r/ROCm/comments/12bmygw/how_do_you_build_apps_with_hipblas_using_cmake/) and [(2)](https://www.reddit.com/r/cmake/comments/12iknc9/building_crossplataform_libraries_with_hip_in_c/).
+ - A *hipified* version of the *cuda library* is then explored.
+  We aim to build it on AMD and NVidia platforms without any special treatment, we refer to it as the *hip library*.
 
+## Results:
+
+ - The CUDA library builds and runs well on NVIDIA platforms.
+ - The `hip` library builds and runs well on AMD platforms.
+ - However, the `hip` library fails not build on NVIDIA platforms.
+ - We resolve by using a nasty switch between the `CUBLAS` and `ROCBLAS`  libraries when building. This results in a cross-platform version of the *cuda library*. We refer to it as the *device library* because it builds on NVIDIA and/or AMD platforms. However, it is not an elegant solution by far.
+  
+## Discussion:
+No matter the version of `hip`, the problem lies on the `nvcc` compiler. It fails to link the hipBLAS to the target library becuase it does not accept the library endings. More explicitly, we obtain the following error message:
+```bash
+$ cmake ..
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/mdiaz/Depots/devlibrary/hip_library/build
+
+$ make
+[ 25%] Linking CXX shared library libhip_sampleLib.so
+nvcc fatal   : "Don't know what to do with '/opt/rocm-5.5.0/lib/libhipblas.so.2.2'"
+make[2]: *** [CMakeFiles/hip_sampleLib.dir/build.make:98: libhip_sampleLib.so] Error 1
+make[1]: *** [CMakeFiles/Makefile2:85: CMakeFiles/hip_sampleLib.dir/all] Error 2
+make: *** [Makefile:91: all] Error 2
+```
+Therefore, the problem only occurs on Nvidia platforms.
+
+In talks with other users, the problem lies on either NVidia fixing this issue (very unlikely) or find a workaround at the CMake level.
+See posts [(1)](https://www.reddit.com/r/ROCm/comments/12bmygw/how_do_you_build_apps_with_hipblas_using_cmake/) and [(2)](https://www.reddit.com/r/cmake/comments/12iknc9/building_crossplataform_libraries_with_hip_in_c/). To the best of my knowledge, no solution has been reported.
+
+
+## About the Repo:
 This repo is organized as follows:
 ```bash
 .
@@ -39,8 +71,10 @@ This repo is organized as follows:
 ├── LICENSE
 └── README.md
 ```
+where the subfolder `compileScripts` contains the compilation details used to build the libraries.
+
 ## Build
-Assuming that the `CUDAtoolkit` and the `HIP` [package](https://github.com/ROCm-Developer-Tools/HIP) have been properly installed/built on a linux box, each sample_library can be build using `CMake` > 3.16 by sourcing its respetive compilation script:
+Assuming that the `CUDAtoolkit` 11.8 and the `HIP` 5.5 [package](https://github.com/ROCm-Developer-Tools/HIP) have been properly installed/built on a linux box, each sample_library can be build using `CMake` > 3.16 by sourcing its respetive compilation script:
 ```bash 
 $ mkdir build && cd build
 $ source ../compileScripts/cmake_*.sh
@@ -106,7 +140,7 @@ $ make
 ```
 NOTE: I have excluded all warning output messages from `hipcc` for the sake of clarity. To avoid them, one must implement a `deviceErrChecker()` function/macro. `hipcc` is very picky in this regard.
 
-## What's trick on *device library*?
+## What's the trick on *device library*?
 
 Given the `CMake` building problem with `hipblas` libraries and `hipcc` on **NVIDIA platform**, see [(1)](https://www.reddit.com/r/ROCm/comments/12bmygw/how_do_you_build_apps_with_hipblas_using_cmake/) and [(2)](https://www.reddit.com/r/cmake/comments/12iknc9/building_crossplataform_libraries_with_hip_in_c/)), a preprocessing switch has been implemented so that the `cublas` library is used when compiling the *device_library* on **NVIDIA platform**s and the `hipblas` library when on **AMD platform**s. 
 

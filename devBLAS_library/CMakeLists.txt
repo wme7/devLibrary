@@ -23,7 +23,7 @@ else()
   set(DEPENDENCIES CUDA::cublas)
 endif()
 
-# Create SHARED or STATIC host library.
+# Create SHARED or STATIC library on the host.
 set(library_name Test)
 add_library(${library_name} SHARED library/library.cpp)
 target_include_directories(${library_name} PRIVATE ${include_dirs})

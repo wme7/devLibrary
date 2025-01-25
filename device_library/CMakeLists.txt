@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
-project(host_library LANGUAGES CXX)
+project(device_library LANGUAGES CXX)
 
-set(GPU_RUNTIME "CUDA" CACHE STRING "Switches between HIP and CUDA")
-set_property(CACHE GPU_RUNTIME PROPERTY STRINGS "HIP" "CUDA")
+set(BUILD_GPU_LANGUAGE "CUDA" CACHE STRING "Switches between HIP and CUDA")
+set_property(CACHE BUILD_GPU_LANGUAGE PROPERTY STRINGS "HIP" "CUDA")
 
-enable_language(${GPU_RUNTIME})
-set(CMAKE_${GPU_RUNTIME}_STANDARD 17)
-set(CMAKE_${GPU_RUNTIME}_EXTENSIONS OFF)
-set(CMAKE_${GPU_RUNTIME}_STANDARD_REQUIRED ON)
+enable_language(${BUILD_GPU_LANGUAGE})
+set(CMAKE_${BUILD_GPU_LANGUAGE}_STANDARD 17)
+set(CMAKE_${BUILD_GPU_LANGUAGE}_EXTENSIONS OFF)
+set(CMAKE_${BUILD_GPU_LANGUAGE}_STANDARD_REQUIRED ON)
 
 set(ROCM_ROOT "/opt/rocm" CACHE PATH "Root directory of the ROCm installation")
 list(APPEND CMAKE_PREFIX_PATH "${ROCM_ROOT}")
@@ -17,13 +17,13 @@ if (BUILD_GPU_LANGUAGE STREQUAL "HIP")
   add_compile_definitions(__USE_HIP__)
 endif()
 
-# Create SHARED or STATIC host library.
+# Create SHARED or STATIC library on the host.
 set(library_name Test)
 add_library(${library_name} SHARED library/library.cpp)
 target_include_directories(${library_name} PRIVATE ${include_dirs})
 target_include_directories(${library_name} PUBLIC library)
 set_target_properties(${library_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_source_files_properties(library/library.cpp PROPERTIES LANGUAGE ${GPU_RUNTIME})
+set_source_files_properties(library/library.cpp PROPERTIES LANGUAGE ${BUILD_GPU_LANGUAGE})
 
 # Create a driver executable using ROCm's bundled version of clang.
 set(PROJECT_NAME_clang ${PROJECT_NAME}_clang)

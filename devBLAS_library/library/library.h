@@ -1,5 +1,4 @@
-// My "super" library for HIP
-# pragma once
+// My "super" library for working on HIP or CUDA
 
 #include <cstdio>
 
@@ -35,4 +34,4 @@ struct display
 {
   static void printVector(const T *x, size_t n);
 };
-}  // namespace device
+}  // namespace hip

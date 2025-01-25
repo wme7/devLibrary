@@ -1,12 +1,12 @@
 # Device Library
-Writen by Manuel A. Diaz @ CENAERO ASBL on 25.04.2023 
+Writen by Manuel A. Diaz on 25.01.2025
 
-Is a prototype library to test cross-device capabilities of `HIP` API and `roc::hipblas` library.
+This library contains two examples of C++ libraries that contain GPU-functionalities. These libraries are a proof-of-concept for building cross-platform libraries that can be explicitly build on either CUDA- or HIP-runtime.
 
 ## Introduction
 In this example we aim to response a simple question:
 
-> How to build single `hip`-library with `CMake` on either NVIDIA or AMD platforms?
+> How to build single cross-platform library with `CMake` that builds on either NVIDIA or AMD platforms?
 
 ## Exploration path:
 
@@ -14,109 +14,97 @@ In this example we aim to response a simple question:
   We refer to it from here on as the *cuda library*.
  - A *hipified* version of the *cuda library* is then explored.
   We aim to build it on AMD and NVidia platforms without any special treatment, we refer to it as the *hip library*.
+ - An explicit layer to swap for the functionalities of both runtimes is build on a common header. 
+ - We explore CMake 3.21, as HIP has become a compilation language to control the sources language property.
 
 ## Results:
 
- - The CUDA library builds and runs well on NVIDIA platforms.
- - The `hip` library builds and runs well on AMD platforms.
- - However, the `hip` library fails not build on NVIDIA platforms.
- - We resolve by using a nasty switch between the `CUBLAS` and `ROCBLAS`  libraries when building. This results in a cross-platform version of the *cuda library*. We refer to it as the *device library* because it builds on NVIDIA and/or AMD platforms. However, it is not an elegant solution by far.
+ - The library compiled with CUDA language builds and runs well on NVIDIA platforms.
+ - The library compiled with HIP language builds and runs well on AMD platforms.
   
 ## Discussion:
-No matter the version of `hip`, the problem lies on the `nvcc` compiler. It fails to link the hipBLAS to the target library becuase it does not accept the library endings. More explicitly, we obtain the following error message:
-```bash
-$ cmake ..
--- Configuring done (0.0s)
--- Generating done (0.0s)
--- Build files have been written to: /home/mdiaz/Depots/devlibrary/hip_library/build
 
-$ make
-[ 25%] Linking CXX shared library libhip_sampleLib.so
-nvcc fatal   : "Don't know what to do with '/opt/rocm-5.5.0/lib/libhipblas.so.2.2'"
-make[2]: *** [CMakeFiles/hip_sampleLib.dir/build.make:98: libhip_sampleLib.so] Error 1
-make[1]: *** [CMakeFiles/Makefile2:85: CMakeFiles/hip_sampleLib.dir/all] Error 2
-make: *** [Makefile:91: all] Error 2
-```
-Therefore, the problem only occurs on Nvidia platforms.
+HIP 6.2.4 finally seems to working according to expectations! Although we had to wait for very long to reach this point. It seems that cross-platform gpu-libraries can be finally build in a systematic manner with `CMake`.
 
-In talks with other users, the problem lies on either NVidia fixing this issue (very unlikely) or find a workaround at the CMake level.
-See posts [(1)](https://www.reddit.com/r/ROCm/comments/12bmygw/how_do_you_build_apps_with_hipblas_using_cmake/) and [(2)](https://www.reddit.com/r/cmake/comments/12iknc9/building_crossplataform_libraries_with_hip_in_c/). To the best of my knowledge, no solution has been reported.
-
+We have tested earlier versions of HIP (5.3, 5.6 and 6.1) with their companion hipBLAS libries and noticed this was not a posibility. In these earlier versions, the expectation of developers were to `make` the compilation of any development almost by hand. Thus, a directly development of a cross-platform would have required a third-party library like [kokkos](https://github.com/kokkos/kokkos).
 
 ## About the Repo:
 This repo is organized as follows:
 ```bash
 .
-├── cuda_library
+├── devBLAS_library
 │   ├── CMakeLists.txt
-│   ├── compileScripts
-│   │   └── cmake_cxx_cuda.sh
-│   ├── cuda_sampleLib.cu
-│   ├── cuda_sampleLib.h
-│   └── test_sampleLib.cpp
+│   ├── compile.sh
+│   ├── library
+│   │   ├── common.h
+│   │   ├── library.cpp
+│   │   └── library.h
+│   └── main.cpp
 ├── device_library
 │   ├── CMakeLists.txt
-│   ├── compileScripts
-│   │   └── cmake_hipcc.sh
-│   ├── device_sampleLib.h
-│   ├── device_sampleLib.hip.cpp
-│   └── test_sampleLib.cpp
-├── hip_library
-│   ├── CMakeLists.txt
-│   ├── compileScripts
-│   │   └── cmake_hipcc.sh
-│   ├── hip_sampleLib.h
-│   ├── hip_sampleLib.hip.cpp
-│   └── test_sampleLib.cpp
+│   ├── compile.sh
+│   ├── library
+│   │   ├── common.h
+│   │   ├── library.cpp
+│   │   └── library.h
+│   └── main.cpp
 ├── LICENSE
 └── README.md
 ```
-where the subfolder `compileScripts` contains the compilation details used to build the libraries.
+where the scripts `compile.sh` contains the details used to build the libraries.
 
 ## Build
-Assuming that the `CUDAtoolkit` 11.8 and the `HIP` 5.5 [package](https://github.com/ROCm-Developer-Tools/HIP) have been properly installed/built on a linux box, each sample_library can be build using `CMake` > 3.16 by sourcing its respetive compilation script:
+Assuming that the `CUDAtoolkit` 12.6 and the `HIP` 6.2.4 [package](https://github.com/ROCm-Developer-Tools/HIP) have been properly installed/built on a ubuntu-linux 24.04 box, each sample_library should be build using `CMake` > 3.21 as:
 ```bash 
 $ mkdir build && cd build
-$ source ../compileScripts/cmake_*.sh
+$ cmake -DBUILD_GPU_LANGUAGE=HIP ..
+$ make
 ```
 Typical output on a **NVIDIA platform** reads :
 ```bash
-$ source ../compileScripts/cmake_hipcc.sh 
--- The CXX compiler identification is GNU 8.5.0
+$ cmake -DBUILD_GPU_LANGUAGE=CUDA ..
+-- The CXX compiler identification is GNU 13.3.0
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: /opt/rocm/bin/hipcc - skipped
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Found HIP: /opt/rocm-5.4.0/hip (found version "5.4.22801-aaa1e3d8") 
--- HIP_PLATFORM: nvidia
--- Found CUDAToolkit: /usr/local/cuda-11.8/include (found version "11.8.89") 
+-- The CUDA compiler identification is NVIDIA 12.6.85
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda-12.6/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Found CUDAToolkit: /usr/local/cuda-12.6/targets/x86_64-linux/include (found version "12.6.85") 
 -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
 -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
 -- Found Threads: TRUE  
--- Configuring done (1.6s)
+-- Configuring done (1.7s)
 -- Generating done (0.0s)
--- Build files have been written to: /home/mdiaz/Depots/devLibrary/device_library/build
+-- Build files have been written to: /home/mdiaz/Depots/devLibrary/devBLAS_library/build
 
 $ make
-[ 25%] Building CUDA object CMakeFiles/cuda_sampleLib.dir/cuda_sampleLib.cu.o
-[ 50%] Linking CUDA shared library libcuda_sampleLib.so
-[ 50%] Built target cuda_sampleLib
-[ 75%] Building CXX object CMakeFiles/test_sampleLib.run.dir/test_sampleLib.cpp.o
-[100%] Linking CXX executable test_sampleLib.run
-[100%] Built target test_sampleLib.run
+[ 16%] Building CUDA object CMakeFiles/Test.dir/library/library.cpp.o
+[ 33%] Linking CUDA shared library libTest.so
+[ 33%] Built target Test
+[ 50%] Building CXX object CMakeFiles/devBLAS_library_clang.dir/main.cpp.o
+[ 66%] Linking CXX executable devBLAS_library_clang
+[ 66%] Built target devBLAS_library_clang
+[ 83%] Building CXX object CMakeFiles/devBLAS_library_cxx.dir/main.cpp.o
+[100%] Linking CXX executable devBLAS_library_cxx
+[100%] Built target devBLAS_library_cxx
 ```
 
 Typical output on a **AMD platform** reads :
 ```bash
-$ source ../compileScripts/cmake_hipcc.sh 
+$ cmake -DBUILD_GPU_LANGUAGE=HIP ..
 -- The CXX compiler identification is Clang 14.0.0
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
 -- Check for working CXX compiler: /opt/rocm/bin/hipcc - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Found HIP: /opt/rocm (found version "5.2.21153-02187ecf") 
+-- Found HIP: /opt/rocm (found version "6.2.1153-02187ecf") 
 -- Performing Test HIP_CLANG_SUPPORTS_PARALLEL_JOBS
 -- Performing Test HIP_CLANG_SUPPORTS_PARALLEL_JOBS - Success
 -- HIP_PLATFORM: amd
@@ -130,33 +118,56 @@ $ source ../compileScripts/cmake_hipcc.sh
 -- Generating done
 -- Build files have been written to: /users/diazesco/Depots/devLibrary/hip_library/build
 
-$ make 
-[ 25%] Building CXX object CMakeFiles/device_sampleLib.dir/device_sampleLib.hip.cpp.o
-[ 50%] Linking CXX shared library libdevice_sampleLib.so
-[ 50%] Built target device_sampleLib
-[ 75%] Building CXX object CMakeFiles/test_sampleLib.run.dir/test_sampleLib.cpp.o
-[100%] Linking CXX executable test_sampleLib.run
-[100%] Built target test_sampleLib.run
+$ make
+[ 16%] Building HIP object CMakeFiles/Test.dir/library/library.cpp.o
+[ 33%] Linking HIP shared library libTest.so
+[ 33%] Built target Test
+[ 50%] Building CXX object CMakeFiles/devBLAS_library_clang.dir/main.cpp.o
+[ 66%] Linking CXX executable devBLAS_library_clang
+[ 66%] Built target devBLAS_library_clang
+[ 83%] Building CXX object CMakeFiles/devBLAS_library_cxx.dir/main.cpp.o
+[100%] Linking CXX executable devBLAS_library_cxx
+[100%] Built target devBLAS_library_cxx
 ```
-NOTE: I have excluded all warning output messages from `hipcc` for the sake of clarity. To avoid them, one must implement a `deviceErrChecker()` function/macro. `hipcc` is very picky in this regard.
 
 ## What's the trick on *device library*?
 
-Given the `CMake` building problem with `hipblas` libraries and `hipcc` on **NVIDIA platform**, see [(1)](https://www.reddit.com/r/ROCm/comments/12bmygw/how_do_you_build_apps_with_hipblas_using_cmake/) and [(2)](https://www.reddit.com/r/cmake/comments/12iknc9/building_crossplataform_libraries_with_hip_in_c/)), a preprocessing switch has been implemented so that the `cublas` library is used when compiling the *device_library* on **NVIDIA platform**s and the `hipblas` library when on **AMD platform**s. 
+No magic, no work-arounds, straitforwardly:
+* Use CMake's feature to use HIP as a compilation language
+* A header to encapsulate the HIP or CUDA runtime functionalities used in the library.
 
 ## Test
 
-Verify that for each case, the library test script produces the following output:
+For each case library, the main in build using AMD's clang compiler or the Host's gcc compiler. On both scenarios we obtained:
 
 ```bash
-./test_sampleLib.run 
- -- print vector -- 
- 0.0000,  1.0000,  2.0000,  3.0000,  4.0000,  5.0000,  6.0000,  7.0000,  8.0000,  9.0000, 10.0000, 11.0000, 12.0000, 13.0000, 14.0000, 15.0000, 16.0000, 17.0000, 18.0000, 19.0000, 20.0000, 21.0000, 22.0000, 23.0000, 24.0000, 25.0000, 26.0000, 27.0000, 28.0000, 29.0000, 30.0000, 31.0000, 32.0000, 33.0000, 34.0000, 35.0000, 36.0000, 37.0000, 38.0000, 39.0000, 40.0000, 41.0000, 42.0000, 43.0000, 44.0000, 45.0000, 46.0000, 47.0000, 48.0000, 49.0000, 50.0000, 51.0000, 52.0000, 53.0000, 54.0000, 55.0000, 56.0000, 57.0000, 58.0000, 59.0000, 60.0000, 61.0000, 62.0000, 63.0000, 64.0000, 65.0000, 66.0000, 67.0000, 68.0000, 69.0000, 70.0000, 71.0000, 72.0000, 73.0000, 74.0000, 75.0000, 76.0000, 77.0000, 78.0000, 79.0000, 80.0000, 81.0000, 82.0000, 83.0000, 84.0000, 85.0000, 86.0000, 87.0000, 88.0000, 89.0000, 90.0000, 91.0000, 92.0000, 93.0000, 94.0000, 95.0000, 96.0000, 97.0000, 98.0000, 99.0000, 100.0000, 101.0000, 102.0000, 103.0000, 104.0000, 105.0000, 106.0000, 107.0000, 108.0000, 109.0000, 110.0000, 111.0000, 112.0000, 113.0000, 114.0000, 115.0000, 116.0000, 117.0000, 118.0000, 119.0000, 120.0000, 121.0000, 122.0000, 123.0000, 124.0000, 125.0000, 126.0000, 127.0000, 128.0000, 129.0000, 130.0000, 131.0000, 132.0000, 133.0000, 134.0000, 135.0000, 136.0000, 137.0000, 138.0000, 139.0000, 140.0000, 141.0000, 142.0000, 143.0000, 144.0000, 145.0000, 146.0000, 147.0000, 148.0000, 149.0000, 150.0000, 151.0000, 152.0000, 153.0000, 154.0000, 155.0000, 156.0000, 157.0000, 158.0000, 159.0000, 160.0000, 161.0000, 162.0000, 163.0000, 164.0000, 165.0000, 166.0000, 167.0000, 168.0000, 169.0000, 170.0000, 171.0000, 172.0000, 173.0000, 174.0000, 175.0000, 176.0000, 177.0000, 178.0000, 179.0000, 180.0000, 181.0000, 182.0000, 183.0000, 184.0000, 185.0000, 186.0000, 187.0000, 188.0000, 189.0000, 190.0000, 191.0000, 192.0000, 193.0000, 194.0000, 195.0000, 196.0000, 197.0000, 198.0000, 199.0000, 200.0000, 201.0000, 202.0000, 203.0000, 204.0000, 205.0000, 206.0000, 207.0000, 208.0000, 209.0000, 210.0000, 211.0000, 212.0000, 213.0000, 214.0000, 215.0000, 216.0000, 217.0000, 218.0000, 219.0000, 220.0000, 221.0000, 222.0000, 223.0000, 224.0000, 225.0000, 226.0000, 227.0000, 228.0000, 229.0000, 230.0000, 231.0000, 232.0000, 233.0000, 234.0000, 235.0000, 236.0000, 237.0000, 238.0000, 239.0000, 240.0000, 241.0000, 242.0000, 243.0000, 244.0000, 245.0000, 246.0000, 247.0000, 248.0000, 249.0000, 250.0000, 251.0000, 252.0000, 253.0000, 254.0000, 255.0000, 
+$ ctest
+Test project /home/mdiaz/Depots/devLibrary/device_library/build
+    Start 1: device_library_clang
+1/2 Test #1: device_library_clang .............   Passed    0.36 sec
+    Start 2: device_library_cxx
+2/2 Test #2: device_library_cxx ...............   Passed    0.23 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.59 sec
+
+
+$ ctest
+Test project /path/to/devLibrary/devBLAS_library/build
+    Start 1: devBLAS_library_clang
+1/2 Test #1: devBLAS_library_clang ............   Passed    0.56 sec
+    Start 2: devBLAS_library_cxx
+2/2 Test #2: devBLAS_library_cxx ..............   Passed    0.27 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.83 sec
 ```
 
 ## Disclaimer
 I have tested this only on:
-  - The supercomputer of Wallonia: [LUCIA](https://tier1.cenaero.be/en/lucia-kickoff) nodes ( **NVIDIA platform** )
+  - Personal Computer with NVIDIA QUADRO ( **NVIDIA platform** )
   - The supercomputer of the north: [LUMI](https://www.lumi-supercomputer.eu/may-we-introduce-lumi/) nodes ( **AMD platform** )
 
 happy coding !

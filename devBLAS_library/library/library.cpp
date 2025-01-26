@@ -16,9 +16,8 @@ void memory<T>::free(T* host_mem) {
 }
 
 // explicit instantiations
-template class memory<float>;
-template class memory<double>;
-
+template struct memory<float>;
+template struct memory<double>;
 } // namespace host
 
 
@@ -66,13 +65,10 @@ void display<T>::printVector(const T* array, size_t size)
 }
 
 // explicit instantiations
-template class memory<float>;
-template class memory<double>;
-
-template class blas<float>;
-template class blas<double>;
-
-template class display<float>;
-template class display<double>;
-
+template struct memory<float>;
+template struct memory<double>;
+template struct blas<float>;
+template struct blas<double>;
+template struct display<float>;
+template struct display<double>;
 } // namespace device

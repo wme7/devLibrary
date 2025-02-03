@@ -1,3 +1,6 @@
+#ifndef LIBRARY_H
+#define LIBRARY_H
+
 // My "super" library for working on HIP or CUDA
 
 #include <cstdio>
@@ -11,6 +14,7 @@ struct memory
   static void free(T* host_mem);
 };
 
+// explicit instantiations
 extern template struct memory<float>;
 extern template struct memory<double>;
 }  // namespace host
@@ -38,6 +42,7 @@ struct display
   static void printVector(const T *x, size_t n);
 };
 
+// explicit instantiations
 extern template struct memory<float>;
 extern template struct memory<double>;
 extern template struct blas<float>;
@@ -45,3 +50,5 @@ extern template struct blas<double>;
 extern template struct display<float>;
 extern template struct display<double>;
 }  // namespace device
+
+#endif // LIBRARY_H

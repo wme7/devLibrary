@@ -1,7 +1,7 @@
 #include "library.h"
 #include "common.h"
 
-// Using the PIMPL c++ idiom
+// Using a pointer to implementation (PImpl) technique
 
 class DeviceEventImpl {
   public:
@@ -34,6 +34,8 @@ class DeviceEventImpl {
     devEvent_t start;
     devEvent_t end;
 };
+
+// DeviceEvent class implementation
 
 DeviceEvent::DeviceEvent() : pImpl(std::make_unique<DeviceEventImpl>()) {}
 

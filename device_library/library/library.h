@@ -1,6 +1,6 @@
-#ifndef LIBRARY_HPP
-#define LIBRARY_HPP
+#ifndef LIBRARY_H
+#define LIBRARY_H
 
 int foo();
 
-#endif
+#endif // LIBRARY_H

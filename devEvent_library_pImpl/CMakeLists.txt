@@ -33,13 +33,13 @@ set_source_files_properties(library/library.cpp PROPERTIES LANGUAGE ${BUILD_GPU_
 # Create a driver executable using ROCm's bundled version of clang.
 set(PROJECT_NAME_clang ${PROJECT_NAME}_clang)
 add_executable(${PROJECT_NAME_clang} main.cpp)
-target_link_libraries(${PROJECT_NAME_clang} PRIVATE ${library_name} ${DEPENDENCIES})
+target_link_libraries(${PROJECT_NAME_clang} PRIVATE ${library_name})
 set_target_properties(${PROJECT_NAME_clang} PROPERTIES HIP_ARCHITECTURES FALSE)
 
 # Create a driver executable using the host c++ compiler.
 set(PROJECT_NAME_cxx ${PROJECT_NAME}_cxx)
 add_executable(${PROJECT_NAME_cxx} main.cpp)
-target_link_libraries(${PROJECT_NAME_cxx} PRIVATE ${library_name} ${DEPENDENCIES})
+target_link_libraries(${PROJECT_NAME_cxx} PRIVATE ${library_name})
 set_target_properties(${PROJECT_NAME_cxx} PROPERTIES LINKER_LANGUAGE CXX)
 
 # Create ctests:

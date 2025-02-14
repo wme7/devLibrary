@@ -3,7 +3,11 @@
 
 // My "super" library for measuring time on GPU and CPU
 
-#include "common.h"
+#include <chrono>
+#include <memory>
+
+
+class DeviceEventImpl; // Forward declaration
 
 
 class DeviceEvent {
@@ -16,8 +20,7 @@ class DeviceEvent {
     float elapsed();
 
   private:
-    devEvent_t start;
-    devEvent_t end;
+    std::unique_ptr<DeviceEventImpl> pImpl; // Pointer to implementation
 };
 
 
